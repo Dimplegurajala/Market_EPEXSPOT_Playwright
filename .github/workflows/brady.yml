@@ -39,7 +39,7 @@ jobs:
 
       - name: Execute Playwright Scraper (Functional Layer)
         # CI=true environment variable triggers headless logic in your conftest.py
-        run: pytest tests/test_brady_assessment.py -s
+        run: pytest tests/test_webcrawl.py -s
         env:
           PYTHONPATH: .
           CI: "true"
