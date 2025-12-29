@@ -26,20 +26,12 @@ class MarketResultsPage(BasePage):
         base_path = Path(base_directory)
         base_path.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Initiating scrape sequence...")
-        
-        # Ensure the UI is settled for the menu items to be detectable
         self.page.wait_for_load_state("networkidle")
-        
-        # SENIOR FIX: Specifically wait for the intervals to be attached 
-        # so 'intervals' list isn't empty in GitHub
         self.page.wait_for_selector("li.sub-child a", state="attached", timeout=20000)
 
         scraped_data = []
         intervals = self.page.locator("li.sub-child a").all_inner_texts()
         rows = self.page.locator("table tbody tr").all()
-
-        logger.info(f"Found {len(intervals)} intervals and {len(rows)} data rows.")
 
         row_index = 0
         for interval in intervals:
@@ -48,14 +40,13 @@ class MarketResultsPage(BasePage):
 
             while row_index < len(rows):
                 cells = rows[row_index].locator("td").all_inner_texts()
-                
-                # Your logic: Column 0 is Low, 1 is High, 2 is Last, 3 is Weight Avg.
                 if len(cells) >= 4 and cells[0].strip() != "-":
                     try:
                         def clean_p(text):
                             cleaned = re.sub(r'[^\d.]', '', text)
                             return float(cleaned) if cleaned else 0.0
 
+                        # Keep 'Hours' internally for robust data mapping
                         data_point = {
                             "Hours": interval_text,
                             "Low": clean_p(cells[0]),
@@ -67,7 +58,7 @@ class MarketResultsPage(BasePage):
                         validate(instance=data_point, schema=MARKET_DATA_SCHEMA)
                         scraped_data.append(data_point)
                         row_index += 1
-                        break # Move to next interval
+                        break 
                     except Exception:
                         row_index += 1
                         continue
@@ -79,9 +70,12 @@ class MarketResultsPage(BasePage):
 
         if scraped_data:
             with open(filepath, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.DictWriter(f, fieldnames=["Hours", "Low", "High", "Last", "Weight Avg."])
+                # MANDATORY: Only the 4 columns requested by Brady 
+                fieldnames = ["Low", "High", "Last", "Weight Avg."]
+                
+                # 'extrasaction' ensures 'Hours' is ignored in the final file 
+                writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
                 writer.writeheader()
                 writer.writerows(scraped_data)
-            logger.info(f"Generated: {filepath}")
             return str(filepath)
         return None
