@@ -3,14 +3,13 @@ from pages.market_results_page import MarketResultsPage
 import pytest
 
 def test_brady_assessment(page):
-    # 1. FORCE DESKTOP VIEWPORT (Solves the 'unrecognized arguments' error)
-    # This ensures the menu structure is the same locally and in GitHub Actions
+    # 1. Force Desktop Viewport for consistent table rendering
     page.set_viewport_size({"width": 1920, "height": 1080})
-
-    # 2. Date Calculation
+    
+    # 2. Dynamic Date Calculation
     target_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-
-    # 3. Build URL
+    
+    # 3. Dynamic URL Construction
     direct_url = (
         f"https://www.epexspot.com/en/market-results?"
         f"modality=Continuous&product=30&market_area=GB&"
@@ -20,22 +19,30 @@ def test_brady_assessment(page):
     market_page = MarketResultsPage(page)
     
     try:
-        # 4. Navigate
-        market_page.navigate(direct_url)
-        page.wait_for_load_state("networkidle")
-        
-        # 5. Handle Cookies
+        # STEP 1: Session Warming
+        # Visit base page to set cookies and initialize JS
+        page.goto("https://www.epexspot.com/en/market-results", wait_until="domcontentloaded")
         market_page.handle_cookies()
 
-        # 6. Revert to your original working selector
-        # 'attached' is best for menus that might be hidden by hover states
-        page.wait_for_selector("li.sub-child a", state="attached", timeout=30000)
+        # STEP 2: Direct Navigation
+        page.goto(direct_url, wait_until="networkidle")
         
-        # 7. Extract Data
+        # STEP 3: Data-Centric Wait
+        # We wait for the table rows directly, ignoring the flaky side menu
+        page.wait_for_selector("table tbody tr", state="attached", timeout=30000)
+
+        # STEP 4: Scrape & Validate
+        # This will now return None (and fail the assert) if no rows are found
         filepath = market_page.scrape_to_csv()
         
-        assert filepath is not None, f"Scrape failed for {target_date}."
+        # 5. Professional Assertions
+        assert filepath is not None, f"Scrape failed: No data extracted for {target_date}."
         print(f"File saved successfully at: {filepath}")
         
+    except Exception as e:
+        # Re-raise the error so Pytest (and GitHub Actions) records a Failure
+        # This prevents the 'Silent Pass' you were experiencing
+        print(f"Critical Scraper Failure: {e}")
+        raise e 
     finally:
         page.close()

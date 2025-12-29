@@ -31,7 +31,8 @@ report.html           # Root level report
 
 # --- Data Extraction (The .csv files) ---
 # Prevents market data results from being committed
-data/*.csv            # Excludes market_results_*.csv
+data/*.csv
+!data/.gitkeep           # Excludes market_results_*.csv but keeps folder
 
 # --- Logs ---
 logs/*.log

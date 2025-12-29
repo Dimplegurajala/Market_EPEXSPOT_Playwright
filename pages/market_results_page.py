@@ -23,21 +23,23 @@ MARKET_DATA_SCHEMA = {
 
 class MarketResultsPage(BasePage):
     def scrape_to_csv(self, base_directory: str = "data"):
-        # Use Pathlib for modern path management 
         base_path = Path(base_directory)
         base_path.mkdir(parents=True, exist_ok=True)
 
         logger.info("Initiating scrape sequence...")
-        self.page.evaluate("document.body.style.zoom='80%'")
-
-        try:
-            self.page.wait_for_selector("table tbody tr", timeout=10000)
-        except Exception:
-            logger.warning("Table rows not detected; proceeding with current view.")
+        
+        # Ensure the UI is settled for the menu items to be detectable
+        self.page.wait_for_load_state("networkidle")
+        
+        # SENIOR FIX: Specifically wait for the intervals to be attached 
+        # so 'intervals' list isn't empty in GitHub
+        self.page.wait_for_selector("li.sub-child a", state="attached", timeout=20000)
 
         scraped_data = []
         intervals = self.page.locator("li.sub-child a").all_inner_texts()
         rows = self.page.locator("table tbody tr").all()
+
+        logger.info(f"Found {len(intervals)} intervals and {len(rows)} data rows.")
 
         row_index = 0
         for interval in intervals:
@@ -47,10 +49,12 @@ class MarketResultsPage(BasePage):
             while row_index < len(rows):
                 cells = rows[row_index].locator("td").all_inner_texts()
                 
+                # Your logic: Column 0 is Low, 1 is High, 2 is Last, 3 is Weight Avg.
                 if len(cells) >= 4 and cells[0].strip() != "-":
                     try:
                         def clean_p(text):
-                            return float(re.sub(r'[^\d.]', '', text))
+                            cleaned = re.sub(r'[^\d.]', '', text)
+                            return float(cleaned) if cleaned else 0.0
 
                         data_point = {
                             "Hours": interval_text,
@@ -59,17 +63,16 @@ class MarketResultsPage(BasePage):
                             "Last": clean_p(cells[2]),
                             "Weight Avg.": clean_p(cells[3])
                         }
-                        # Validate against financial contract schema 
+                        
                         validate(instance=data_point, schema=MARKET_DATA_SCHEMA)
                         scraped_data.append(data_point)
                         row_index += 1
-                        break 
+                        break # Move to next interval
                     except Exception:
                         row_index += 1
                         continue
                 row_index += 1
 
-        # using Pathlib to work with the .csv file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"market_results_{timestamp}.csv"
         filepath = base_path / filename
