@@ -19,28 +19,33 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          cache: 'pip' # Speeds up subsequent runs
+          cache: 'pip' # Speeds up subsequent runs by caching dependencies
 
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
+      - name: Create Artifact Directories
+        # Ensures paths exist even if tests fail early
+        run: mkdir -p data reports logs
+
       - name: Start Mock API Server (Service Layer)
-        # Background process to support hermetic testing
+        # Background process to support hermetic contract testing
         run: |
-          python app.py &
-          # Master's Level: Dynamic wait for service availability instead of sleep
+          python mock_server.py &
+          # Master's Level: Dynamic wait for service availability instead of hardcoded sleep
           timeout 30s bash -c 'until curl -s http://127.0.0.1:5000/api/market-results; do sleep 2; done'
 
       - name: Execute Playwright Scraper (Functional Layer)
-        # Overriding headed mode for CI environment
-        run: pytest tests/test_brady_assessment.py --headed=False -s
+        # CI=true environment variable triggers headless logic in your conftest.py
+        run: pytest tests/test_brady_assessment.py --headless -s
         env:
           PYTHONPATH: .
+          CI: "true"
 
       - name: Execute Locust Performance Test (Reliability Layer)
-        # Validates response times as mentioned in your E-Commerce Reliability project
+        # Validates the 9.4k request stability benchmark in the CI environment
         run: |
           locust -f locustfile.py \
           --headless \
@@ -49,6 +54,7 @@ jobs:
           --only-summary
 
       - name: Archive Test Results & Artifacts
+        # Captures results even if a previous step fails for Root Cause Analysis
         if: always()
         uses: actions/upload-artifact@v4
         with:
