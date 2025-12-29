@@ -33,7 +33,7 @@ jobs:
       - name: Start Mock API Server (Service Layer)
         # Background process to support hermetic contract testing
         run: |
-          python mock_server.py &
+          python mocks/mock_server.py &
           # Master's Level: Dynamic wait for service availability instead of hardcoded sleep
           timeout 30s bash -c 'until curl -s http://127.0.0.1:5000/api/market-results; do sleep 2; done'
 
@@ -47,7 +47,7 @@ jobs:
       - name: Execute Locust Performance Test (Reliability Layer)
         # Validates the 9.4k request stability benchmark in the CI environment
         run: |
-          locust -f locustfile.py \
+          locust -f performance/locustfile.py \
           --headless \
           -u 10 -r 2 -t 30s \
           --host http://127.0.0.1:5000 \
