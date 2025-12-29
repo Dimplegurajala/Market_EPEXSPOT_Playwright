@@ -1,0 +1,60 @@
+name: Brady Technologies - Scraper & Performance Suite
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  automation-suite:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip' # Speeds up subsequent runs
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Start Mock API Server (Service Layer)
+        # Background process to support hermetic testing
+        run: |
+          python app.py &
+          # Master's Level: Dynamic wait for service availability instead of sleep
+          timeout 30s bash -c 'until curl -s http://127.0.0.1:5000/api/market-results; do sleep 2; done'
+
+      - name: Execute Playwright Scraper (Functional Layer)
+        # Overriding headed mode for CI environment
+        run: pytest tests/test_brady_assessment.py --headed=False -s
+        env:
+          PYTHONPATH: .
+
+      - name: Execute Locust Performance Test (Reliability Layer)
+        # Validates response times as mentioned in your E-Commerce Reliability project
+        run: |
+          locust -f locustfile.py \
+          --headless \
+          -u 10 -r 2 -t 30s \
+          --host http://127.0.0.1:5000 \
+          --only-summary
+
+      - name: Archive Test Results & Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brady-assessment-artifacts
+          path: |
+            data/
+            reports/
+            logs/
+            *.html

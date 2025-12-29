@@ -1,0 +1,8 @@
+playwright
+pytest-playwright
+pytest-html
+playwright-stealth
+jsonschema
+requests
+locust
+Flask

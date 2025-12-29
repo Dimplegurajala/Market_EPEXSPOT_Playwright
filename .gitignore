@@ -1,0 +1,43 @@
+# --- Python & Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+pip-log.txt
+
+# --- Pytest & Playwright Artifacts ---
+.pytest_cache/
+.playwright/
+test-results/
+user_data/            # Local browser session data
+node_modules/
+.ms-playwright/
+
+# --- Test Failure Artifacts (.png files) ---
+# Excludes screenshots from failed test scenarios
+*.png
+screenshots/
+failures/
+debug_*.png           # Excludes your specific debug images
+
+# --- Reports ---
+# Excludes the generated HTML reports
+reports/*.html
+reports/assets/
+report.html           # Root level report
+
+# --- Data Extraction (The .csv files) ---
+# Prevents market data results from being committed
+data/*.csv            # Excludes market_results_*.csv
+
+# --- Logs ---
+logs/*.log
+*.log
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp
