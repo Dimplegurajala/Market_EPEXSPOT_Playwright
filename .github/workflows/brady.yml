@@ -53,14 +53,20 @@ jobs:
           --host http://127.0.0.1:5000 \
           --only-summary
 
+      - name: Execute Playwright Scraper (Functional Layer)
+        # Use the reports/ directory to keep the root clean
+        run: pytest tests/test_webcrawl.py --html=reports/report.html --self-contained-html -s
+        env:
+          PYTHONPATH: .
+          CI: "true"
+
       - name: Archive Test Results & Artifacts
-        # Captures results even if a previous step fails for Root Cause Analysis
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: brady-assessment-artifacts
+          # Uploading the directories is enough; don't upload root *.html
           path: |
             data/
             reports/
             logs/
-            *.html

@@ -10,7 +10,7 @@ def setup_logging():
     """Centralized logging for auditability and Root Cause Analysis."""
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / f"execution_{datetime.now().strftime('%H%M%S')}.log"
+    log_file = log_dir / f"execution_{datetime.now().strftime('%H-%M-%S')}.log"
     
     logger = logging.getLogger()
     for handler in logger.handlers[:]: 
