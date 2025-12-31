@@ -37,12 +37,13 @@ jobs:
           # Master's Level: Dynamic wait for service availability instead of hardcoded sleep
           timeout 30s bash -c 'until curl -s http://127.0.0.1:5000/api/market-results; do sleep 2; done'
 
-      - name: Execute Playwright Scraper (Functional Layer)
+      - name: Execute Playwright Scraper (Functional Layer & API Layer)
         # CI=true environment variable triggers headless logic in your conftest.py
-        run: pytest tests/test_webcrawl.py -s
         env:
           PYTHONPATH: .
           CI: "true"
+        run: pytest tests/test_webcrawl.py tests/test_api.py -v --html=report.html
+        
 
       - name: Execute Locust Performance Test (Reliability Layer)
         # Validates the 9.4k request stability benchmark in the CI environment

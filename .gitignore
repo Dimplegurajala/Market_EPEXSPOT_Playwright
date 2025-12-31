@@ -12,31 +12,31 @@ pip-log.txt
 .pytest_cache/
 .playwright/
 test-results/
-user_data/            # Local browser session data
+user_data/            # Local browser session data (Persistent Context)
 node_modules/
 .ms-playwright/
+[cite_start]trace.zip             # Playwright trace viewer files [cite: 9]
 
 # --- Test Failure Artifacts (.png files) ---
-# Excludes screenshots from failed test scenarios
 *.png
 screenshots/
 failures/
-debug_*.png           # Excludes your specific debug images
+debug_*.png           
 
 # --- Reports ---
-# Excludes the generated HTML reports
 reports/*.html
 reports/assets/
 report.html           # Root level report
 
-# --- Data Extraction (The .csv files) ---
-# Prevents market data results from being committed
+# --- Data Extraction (.csv files) ---
+# [cite_start]Excludes results but keeps the directory structure [cite: 12]
 data/*.csv
-!data/.gitkeep           # Excludes market_results_*.csv but keeps folder
+!data/.gitkeep
 
-# --- Logs ---
+# --- Logs & Performance Data ---
 logs/*.log
 *.log
+locust.log            # Specifically excludes Locust execution logs
 
 # --- IDEs ---
 .vscode/
