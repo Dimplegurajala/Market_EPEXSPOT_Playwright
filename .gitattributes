@@ -1,0 +1,4 @@
+# Treat all HTML files as documentation/generated data
+*.html linguist-documentation
+# Or, if your HTML is inside a specific folder like 'templates'
+templates/** linguist-vendored
