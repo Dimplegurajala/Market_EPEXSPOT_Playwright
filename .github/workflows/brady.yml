@@ -42,13 +42,13 @@ jobs:
         env:
           PYTHONPATH: .
           CI: "true"
-        run: pytest tests/test_webcrawl.py tests/test_api.py -v --html=report.html
+        run: pytest tests/test_webcrawl.py tests/test_market_results.py tests/test_api.py tests/test_api1.py tests/test_resilience.py -v --html=report.html
         
 
       - name: Execute Locust Performance Test (Reliability Layer)
         # Validates the 9.4k request stability benchmark in the CI environment
         run: |
-          locust -f performance/locustfile.py \
+          locust -f performance/locustfile1.py \
           --headless \
           -u 10 -r 2 -t 30s \
           --host http://127.0.0.1:5000 \

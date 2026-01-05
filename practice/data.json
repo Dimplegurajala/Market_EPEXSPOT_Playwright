@@ -1,0 +1,5 @@
+{
+  "test_run_id": "QA-101",
+  "currency": "EUR",
+  "prices": ["€95.22", "€75,01", "N/A", "€52.77", null, "Free"]
+}

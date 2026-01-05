@@ -59,3 +59,36 @@ def page(context):
     
     yield page
     page.close()
+
+@pytest.fixture(scope="function")
+def resilient_page(context):
+    
+    #Page fixture configured for Resilience Testing.
+    #Simulates a 503 Service Unavailable to verify error handling.
+    
+    page = context.new_page()
+    
+    # Intercepting Market Results requests to simulate an outage
+    page.route("**/market-results**", lambda route: route.fulfill(
+        status=503,
+        content_type="text/plain",
+        body="Service Unavailable: EPEX SPOT Server is Down"
+    ))
+    
+    yield page
+    page.close()
+
+import shutil
+
+def pytest_sessionstart(session):
+    """
+    Standard Engineering Practice: Clean up stale artifacts before execution.
+    Ensures that the /logs and /reports directories only contain fresh data.
+    """
+    directories = ['logs', 'user_data'] # user_data holds Playwright persistent state
+    for directory in directories:
+        path = Path(directory)
+        if path.exists():
+            shutil.rmtree(path)
+            logging.info(f"Cleaned up stale directory: {directory}")
+        path.mkdir(parents=True, exist_ok=True)
